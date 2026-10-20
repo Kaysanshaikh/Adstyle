@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<style>
+  :root{
+    --blue:#1763B8; --blue-dark:#114E92;
+    --bg:#EEF1F5; --card:#FFFFFF; --line:#E1E6EC;
+    --ink:#111827; --mut:#5A6472;
+    --ok-bg:#DCF5E4; --ok:#15703F;
+    --warn-bg:#FDF0D5; --warn:#8A5200;
+    --off-bg:#ECEFF3; --off:#5A6472;
+    --bad-bg:#FBE3E3; --bad:#A82218;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-weight:700;
+    overflow:hidden;user-select:none;-webkit-user-select:none}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+
+  header{background:var(--blue);color:#fff;padding:16px 18px}
+  .h1{font-size:21px;font-weight:800;line-height:1.2}
+  .h2{font-size:14px;font-weight:700;margin-top:5px;opacity:.92}
+
+  .secttl{font-size:12px;font-weight:800;letter-spacing:.09em;color:var(--mut);padding:16px 16px 10px}
+
+  /* one name to a row. The four punches are written out in full and each
+     carries its own photo, so two to a row would squeeze both to nothing. */
+  #grid{height:calc(100% - 118px);overflow-y:auto;padding:0 13px 20px;
+    display:flex;flex-direction:column;gap:11px}
+  .tile{background:var(--card);border:1px solid #D7DEE6;border-radius:13px;
+    padding:0;overflow:hidden;display:block;width:100%;cursor:pointer;
+    text-align:left;font:inherit;color:inherit;transition:transform .07s,box-shadow .15s}
+  .tile:active{transform:scale(.985);box-shadow:inset 0 0 0 2px var(--blue)}
+
+  .top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+    padding:10px 12px 9px;border-bottom:1px solid #E7ECF2}
+  .nm{font-size:16px;font-weight:800;letter-spacing:.01em;line-height:1.15;word-break:break-word}
+  .dt{font-size:11px;color:var(--mut);white-space:nowrap;display:flex;align-items:center;gap:8px}
+  .chip{font-size:9px;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:999px;
+    background:#EDF1F6;color:#4A5663;white-space:nowrap}
+
+  /* today so far — a preview only. Nothing here can be typed in or deleted. */
+  .four{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:9px 10px 11px}
+  .b{border-radius:8px;padding:0 3px 7px;text-align:center;border:1px solid #E3E8EE;
+    background:#FBFCFD;overflow:hidden}
+  .b .bar{display:block;height:3px;margin:0 -3px 6px;background:currentColor;opacity:.75}
+  .b .l{display:block;font-size:9px;letter-spacing:.02em;font-weight:800;line-height:1.1}
+  .b .t{display:block;font-size:12px;font-weight:800;line-height:1.1;margin-top:4px;
+    white-space:nowrap;color:var(--ink)}
+  .b .p{display:block;width:100%;height:62px;border-radius:6px;margin-top:6px;
+    background:#C9D0D8;border:1px solid rgba(0,0,0,.08);object-fit:cover;
+    font-size:8px;color:#8893A1}
+  .b .np{display:flex;align-items:center;justify-content:center;background:#fff;
+    border:1px dashed #C9D2DC;color:#9AA3AD;font-size:8px;text-align:center;line-height:1.2}
+
+  .k-IN       {color:#3C7A58}
+  .k-LUNCH_OUT{color:#8A6D2B}
+  .k-LUNCH_IN {color:#5A5386}
+  .k-OUT      {color:#96443C}
+  .none{background:#F5F7F9;border:1px dashed #D5DCE4;color:#9AA3AD}
+  .none .bar{background:transparent}
+  .none .t{color:#9AA3AD}
+
+  .done{background:#F7F9FB;border-color:#DDE3EA}
+  .done .nm{color:#6B7580}
+
+  .screen{position:fixed;inset:0;background:#000;display:none;flex-direction:column;z-index:50}
+  .screen.show{display:flex}
+  .camtop{padding:14px 16px;background:var(--blue);color:#fff;display:flex;
+    align-items:center;justify-content:space-between;gap:12px}
+  .camname{font-size:21px;font-weight:800}
+  .campunch{font-size:12px;font-weight:800;letter-spacing:.08em;opacity:.9;margin-top:3px}
+  .x{width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.18);
+    color:#fff;font-size:22px;font-weight:700;cursor:pointer}
+  .stage{flex:1;position:relative;background:#0B0E12;overflow:hidden}
+  #video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);background:#0B0E12}
+  .cambot{padding:16px;background:#fff;display:flex;flex-direction:column;gap:10px}
+  .shutter{width:100%;padding:20px;border:0;border-radius:12px;background:var(--blue);
+    color:#fff;font:inherit;font-size:19px;font-weight:800;letter-spacing:.03em;cursor:pointer}
+  .shutter:disabled{opacity:.5}
+  /* this panel is an ordinary instruction now, not a warning, so it is light */
+  .prob{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;gap:13px;padding:26px;text-align:center;background:#F3F6FA;color:var(--ink)}
+  .prob.show{display:flex}
+  .probicon{font-size:52px}
+  .probttl{font-size:19px;font-weight:800;color:var(--blue)}
+  .probtxt{font-size:14px;font-weight:700;color:#5A6472;line-height:1.55;max-width:440px}
+
+  .result{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;gap:16px;padding:30px;text-align:center;z-index:60;color:#fff}
+  .result.show{display:flex}
+  .result.good{background:#15703F}
+  .result.bad{background:#A82218}
+  .mark{width:112px;height:112px;border-radius:50%;background:#fff;display:flex;
+    align-items:center;justify-content:center;font-size:62px;font-weight:800}
+  .good .mark{color:#15703F}
+  .bad .mark{color:#A82218}
+  .rname{font-size:32px;font-weight:800}
+  .rpunch{font-size:14px;font-weight:800;letter-spacing:.12em;opacity:.9}
+  .rtime{font-size:46px;font-weight:800}
+  .rnote{font-size:14px;font-weight:700;opacity:.92;max-width:420px;line-height:1.5}
+
+  .pill{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:70;
+    background:#8A5200;color:#fff;font-size:12px;font-weight:800;padding:8px 16px;
+    border-radius:999px;display:none}
+  .pill.show{display:block}
+  .empty{grid-column:1/-1;text-align:center;color:var(--mut);padding:50px 20px;
+    font-size:15px;font-weight:700;line-height:1.6}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h1" id="hTitle">Attendance — tap your name</div>
+  <div class="h2"><span id="hDate">—</span> &nbsp;·&nbsp; <span class="mono" id="hClock">—</span></div>
+</header>
+
+<div class="secttl">ON DUTY TODAY</div>
+<div id="grid"><div class="empty">Loading…</div></div>
+
+<div class="screen" id="cam">
+  <div class="camtop">
+    <div>
+      <div class="camname" id="camName">—</div>
+      <div class="campunch" id="camPunch">—</div>
+    </div>
+    <button class="x" onclick="closeCam()" aria-label="Cancel">&times;</button>
+  </div>
+  <div class="stage">
+    <div class="prob show" id="prob">
+      <div class="probicon" id="probIcon">📷</div>
+      <div class="probttl" id="probTtl"></div>
+      <div class="probtxt" id="probTxt"></div>
+    </div>
+  </div>
+  <div class="cambot">
+    <button class="shutter" id="shutter" onclick="openNative()">OPEN CAMERA</button>
+  </div>
+</div>
+
+<div class="result" id="res">
+  <div class="mark" id="resMark">✓</div>
+  <div class="rname" id="resName"></div>
+  <div class="rpunch" id="resPunch"></div>
+  <div class="rtime mono" id="resTime"></div>
+  <div class="rnote" id="resNote"></div>
+</div>
+
+<div class="pill" id="pill"></div>
+<canvas id="canvas" style="display:none"></canvas>
+<input type="file" accept="image/*" capture="user" id="fileCam" style="display:none">
+
+<script>
+var STATE=null, CURRENT=null, BUSY=false;
+var QKEY='adstyleQueue';
+var LABEL={IN:'IN',LUNCH_OUT:'LUNCH OUT',LUNCH_IN:'LUNCH IN',OUT:'OUT'};
+var ORDER=['IN','LUNCH_OUT','LUNCH_IN','OUT'];
+
+function t12(d){
+  var h=d.getHours(), ap=h>=12?'PM':'AM';
+  h=h%12; if(h===0) h=12;
+  return h+':'+('0'+d.getMinutes()).slice(-2)+' '+ap;
+}
+function tick(){ document.getElementById('hClock').textContent = t12(new Date()); }
+setInterval(tick,10000); tick();
+
+function load(){
+  google.script.run.withSuccessHandler(render).withFailureHandler(function(e){
+    document.getElementById('grid').innerHTML =
+      '<div class="empty"><b>Could not load.</b><br><br>'+e.message+
+      '<br><br>Check the internet connection, then reload.</div>';
+  }).getKioskState();
+}
+
+function render(s){
+  STATE=s;
+  document.getElementById('hDate').textContent = s.dateLabel;
+  var g=document.getElementById('grid');
+  if(!s.employees.length){
+    g.innerHTML='<div class="empty">No staff added yet.<br>Add them on the computer.</div>';
+    return;
+  }
+  g.innerHTML='';
+  s.employees.forEach(function(e){
+    var b=document.createElement('button');
+    b.type='button'; b.className='tile'+(e.complete?' done':'');
+    b.innerHTML=
+      '<span class="top">'+
+        '<span class="nm">'+esc(e.name)+'</span>'+
+        '<span class="dt">'+esc(s.dateLabel)+
+          '<span class="chip">'+(e.complete?'DAY COMPLETE':'NEXT: '+esc(e.nextLabel))+'</span>'+
+        '</span>'+
+      '</span>'+
+      '<span class="four">'+dayStrip(e)+'</span>';
+    b.onclick=function(){ start(e); };
+    g.appendChild(b);
+  });
+}
+
+var PUNCH_NAME={IN:'IN',LUNCH_OUT:'LUNCH OUT',LUNCH_IN:'LUNCH IN',OUT:'OUT'};
+
+/* Today so far, as a picture: the time and the photo of each punch.
+   It is a preview only — there is nothing here to tap, type in or delete. */
+function dayStrip(e){
+  var times=e.times||{}, photos=e.photos||{};
+  var out='';
+  ORDER.forEach(function(t){
+    var time=times[t]||'', photo=photos[t]||'';
+    out+='<span class="b '+(time?('k-'+t):'none')+'">'+
+           '<span class="bar"></span>'+
+           '<span class="l">'+PUNCH_NAME[t]+'</span>'+
+           '<span class="t">'+(time||'—')+'</span>'+
+           (photo
+             /* a slow or dead link must not leave a broken icon on the wall */
+             ? '<img class="p" src="'+esc(photo)+'" alt="" loading="lazy" '+
+               'onerror="this.outerHTML=\'<span class=&quot;p np&quot;>PHOTO<br>NOT LOADED</span>\'">'
+             : '<span class="p np">NO<br>PHOTO</span>')+
+         '</span>';
+  });
+  return out;
+}
+
+/* a name typed on the computer must never be able to break this page */
+function esc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function start(emp){
+  if(emp.complete){
+    showResult(false, emp.name, 'ALL FOUR PUNCHES DONE', '', 'Nothing left to mark today.');
+    return;
+  }
+  CURRENT=emp;
+  document.getElementById('camName').textContent=emp.name;
+  document.getElementById('camPunch').textContent='MARKING · '+emp.nextLabel;
+  var sh=document.getElementById('shutter');
+  sh.disabled=false; sh.textContent='OPEN CAMERA';
+  camNote('📷','Opening the camera…',
+    'Take the photo and tap OK. If the camera does not open by itself, press the blue button below.');
+  document.getElementById('cam').classList.add('show');
+  openNative();
+}
+
+/* The phone's own camera app is the only way photos are taken. The in-page
+   camera is gone: Google serves this page inside its own frame, and on some
+   phones that frame refuses to pass the camera through, which no setting on
+   the phone can undo. The camera app always works. */
+function camNote(icon,ttl,txt){
+  document.getElementById('probIcon').textContent=icon;
+  document.getElementById('probTtl').textContent=ttl;
+  document.getElementById('probTxt').textContent=txt;
+  document.getElementById('prob').classList.add('show');
+}
+
+function closeCam(){ document.getElementById('cam').classList.remove('show'); CURRENT=null; }
+
+function openNative(){
+  var f=document.getElementById('fileCam');
+  f.value='';
+  f.click();
+}
+
+document.getElementById('fileCam').addEventListener('change',function(){
+  var file=this.files&&this.files[0];
+  if(!file||!CURRENT) return;
+  lockBtn();
+  var img=new Image();
+  img.onload=function(){
+    URL.revokeObjectURL(img.src);
+    send({empId:CURRENT.empId, photoData:shrink(img,img.naturalWidth,img.naturalHeight,false)});
+  };
+  img.onerror=function(){
+    BUSY=false;
+    showResult(false, CURRENT?CURRENT.name:'', 'PHOTO NOT READABLE','','Please try again.');
+  };
+  img.src=URL.createObjectURL(file);
+});
+
+function lockBtn(){
+  BUSY=true;
+  var b=document.getElementById('shutter');
+  b.disabled=true; b.textContent='SAVING…';
+}
+
+function shrink(src,w,h,mirror){
+  var W=480, H=Math.round(h*(W/w));
+  var c=document.getElementById('canvas');
+  c.width=W; c.height=H;
+  var x=c.getContext('2d');
+  if(mirror){ x.translate(W,0); x.scale(-1,1); }
+  x.drawImage(src,0,0,W,H);
+  return c.toDataURL('image/jpeg',0.7);
+}
+
+function send(payload){
+  var who=CURRENT?CURRENT.name:'';
+  google.script.run
+    .withSuccessHandler(function(r){
+      BUSY=false; closeCam();
+      if(r.ok){
+        showResult(true, r.name, r.punch, r.time,
+          r.remaining>0 ? (r.remaining+' punch(es) left today') : 'Day complete.');
+        bumpTile(payload.empId, r);
+        flushQueue();
+      }else{
+        showResult(false, who, 'NOT SAVED', '', r.message);
+        load();
+      }
+    })
+    .withFailureHandler(function(){
+      BUSY=false; queueIt(payload); closeCam();
+      showResult(false, who, 'NO INTERNET','',
+        'Saved on this phone. It will upload on its own when the connection is back.');
+    })
+    .recordPunch(payload);
+}
+
+/* update the tile here instead of asking the server again */
+function bumpTile(empId,r){
+  if(!STATE) return;
+  STATE.employees.forEach(function(e){
+    if(e.empId!==empId) return;
+    e.doneCount=r.doneCount;
+    e.status=r.status; e.statusLabel=r.statusLabel;
+    /* fill the punch that was just taken straight into the preview, so the
+       card is right without asking the server all over again */
+    if(r.punchType){
+      e.times=e.times||{}; e.times[r.punchType]=r.time;
+      if(r.photoUrl){ e.photos=e.photos||{}; e.photos[r.punchType]=r.photoUrl; }
+    }
+    var nxt=ORDER[r.doneCount]||null;
+    e.next=nxt; e.nextLabel=nxt?LABEL[nxt]:'DAY COMPLETE'; e.complete=!nxt;
+  });
+  render(STATE);
+}
+
+function queueIt(p){
+  try{
+    var q=JSON.parse(localStorage.getItem(QKEY)||'[]');
+    q.push(p); localStorage.setItem(QKEY,JSON.stringify(q));
+    showPill(q.length+' punch(es) waiting to upload');
+  }catch(e){}
+}
+function flushQueue(){
+  var q;
+  try{ q=JSON.parse(localStorage.getItem(QKEY)||'[]'); }catch(e){ return; }
+  if(!q.length){ hidePill(); return; }
+  google.script.run
+    .withSuccessHandler(function(){
+      q.shift(); localStorage.setItem(QKEY,JSON.stringify(q));
+      if(q.length){ showPill(q.length+' punch(es) waiting to upload'); flushQueue(); }
+      else { hidePill(); load(); }
+    })
+    .withFailureHandler(function(){})
+    .recordPunch(q[0]);
+}
+function showPill(t){ var p=document.getElementById('pill'); p.textContent=t; p.classList.add('show'); }
+function hidePill(){ document.getElementById('pill').classList.remove('show'); }
+
+var resTimer=null;
+function showResult(good,name,punch,time,note){
+  var r=document.getElementById('res');
+  r.className='result show '+(good?'good':'bad');
+  document.getElementById('resMark').textContent=good?'✓':'!';
+  document.getElementById('resName').textContent=name;
+  document.getElementById('resPunch').textContent=punch;
+  document.getElementById('resTime').textContent=time||'';
+  document.getElementById('resNote').textContent=note||'';
+  clearTimeout(resTimer);
+  resTimer=setTimeout(function(){ r.classList.remove('show'); }, good?3200:6000);
+  r.onclick=function(){ clearTimeout(resTimer); r.classList.remove('show'); };
+}
+
+load();
+setInterval(load,300000);
+setInterval(flushQueue,60000);
+window.addEventListener('online',flushQueue);
+flushQueue();
+
+if('wakeLock' in navigator){
+  navigator.wakeLock.request('screen').catch(function(){});
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible') navigator.wakeLock.request('screen').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
