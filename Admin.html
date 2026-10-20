@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --blue:#1763B8; --blue-dark:#114E92; --blue-soft:#E4EDF8;
+    --bg:#EEF1F5; --card:#FFFFFF; --line:#E1E6EC;
+    --ink:#111827; --mut:#5A6472;
+    --ok-bg:#DCF5E4; --ok:#15703F;
+    --warn-bg:#FDF0D5; --warn:#8A5200;
+    --off-bg:#ECEFF3; --off:#5A6472;
+    --bad-bg:#FBE3E3; --bad:#A82218;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-size:14px;font-weight:700;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+
+  /* login */
+  #login{position:fixed;inset:0;background:var(--blue);display:flex;align-items:center;
+    justify-content:center;z-index:100;padding:20px}
+  .lbox{background:#fff;padding:32px 28px;border-radius:14px;width:330px;text-align:center}
+  .lbox h1{font-size:18px;margin:0 0 4px;font-weight:800}
+  .lbox p{font-size:13px;color:var(--mut);margin:0 0 18px;font-weight:700}
+  .lbox input{width:100%;padding:14px;font-size:22px;text-align:center;letter-spacing:.4em;
+    border-radius:9px;border:1px solid var(--line);font-family:inherit;font-weight:800}
+  .lbox button{width:100%;margin-top:12px;padding:14px;border:0;border-radius:9px;
+    background:var(--blue);color:#fff;font-weight:800;font-size:15px;font-family:inherit;cursor:pointer}
+  .lerr{color:var(--bad);font-size:12px;margin-top:10px;min-height:16px;font-weight:700}
+
+  header{background:var(--blue);color:#fff;padding:14px 20px}
+  .brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .brand b{font-size:20px;font-weight:800;letter-spacing:.06em}
+  .brand span{font-size:12px;font-weight:700;opacity:.9;letter-spacing:.06em}
+  nav{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+  nav button{border:0;background:rgba(255,255,255,.15);color:#fff;padding:9px 16px;
+    border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
+  nav button.on{background:#fff;color:var(--blue)}
+
+  main{padding:18px;max-width:1400px;margin:0 auto}
+  .tab{display:none}.tab.on{display:block}
+
+  .row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px}
+  .f{display:flex;flex-direction:column;gap:5px}
+  label{font-size:11px;font-weight:800;letter-spacing:.05em;color:var(--mut)}
+  input,select{padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:13px;
+    background:#fff;color:var(--ink);font-family:inherit;font-weight:700}
+  button.b{padding:10px 17px;border:0;border-radius:8px;background:var(--blue);color:#fff;
+    font-weight:800;font-size:13px;cursor:pointer;font-family:inherit}
+  button.g{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  button.r{background:var(--bad)}
+  button.s{padding:6px 11px;font-size:12px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;overflow:hidden}
+  .card>h3{margin:0;padding:13px 17px;border-bottom:1px solid var(--line);font-size:13px;
+    letter-spacing:.06em;font-weight:800;display:flex;justify-content:space-between;
+    align-items:baseline;gap:10px}
+  .card>h3 em{font-style:normal;font-size:11px;font-weight:700;color:var(--mut)}
+  /* every word on the page is bold */
+  div,span,td,th,p,b,label,button,input,select,option{font-weight:700}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:12px;margin-bottom:16px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+  .stat .n{font-size:28px;font-weight:800;line-height:1}
+  .stat .l{font-size:11px;color:var(--mut);letter-spacing:.06em;margin-top:6px;font-weight:800}
+
+  .tw{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:9px 10px;background:#E8EDF3;color:var(--mut);font-size:10px;
+    letter-spacing:.06em;border:1px solid #C9D2DC;white-space:nowrap;font-weight:800}
+  td{padding:8px 10px;border:1px solid #DDE3EA;white-space:nowrap}
+  tr:hover td{background:#FAFBFC}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+
+  .chip{display:inline-block;padding:4px 9px;border-radius:7px;font-size:11px;font-weight:800;white-space:nowrap}
+  .c-ok{background:var(--ok-bg);color:var(--ok)}
+  .c-warn{background:var(--warn-bg);color:var(--warn)}
+  .c-bad{background:var(--bad-bg);color:var(--bad)}
+  .c-off{background:var(--off-bg);color:var(--off)}
+  .c-blue{background:var(--blue-soft);color:var(--blue-dark)}
+
+  .thumb{width:32px;height:32px;border-radius:5px;object-fit:cover;border:1px solid var(--line);
+    cursor:pointer;background:#E8EBEF;display:block}
+  .thumbs{display:flex;gap:4px}
+
+  .ov{position:fixed;inset:0;background:rgba(10,15,25,.8);display:none;align-items:center;
+    justify-content:center;z-index:90;padding:20px}
+  .ov.on{display:flex}
+  .ov img{max-width:95%;max-height:85vh;border-radius:10px}
+  .ovc{background:#fff;border-radius:12px;padding:22px;max-width:520px;width:100%;max-height:90vh;overflow:auto}
+
+  /* The money column is only as wide as the figures, and the name column only
+     as wide as the longest name, so every figure sits beside its own label
+     instead of across the card. */
+  .pay{display:grid;grid-template-columns:max-content auto;justify-content:start;
+    gap:7px 14px;padding:14px 15px;font-size:13px}
+  .pay .k{color:var(--mut);font-weight:700}
+  .pay .v{text-align:right;font-weight:800;min-width:96px;
+    font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .pay .big{font-size:17px}
+  .pay .wide{grid-column:1/-1}
+  .hr{grid-column:1/-1;height:2px;background:var(--ink);margin:4px 0}
+  .muted{color:var(--mut);font-size:12px;font-weight:700}
+  .busy{text-align:center;padding:36px;color:var(--mut);font-weight:700}
+  .scroll{max-height:176px;overflow-y:auto}
+  .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+  @media (max-width:900px){ .two{grid-template-columns:1fr} }
+
+  /* LOAN · SALARY · PAYMENTS · ADVANCES — four across on a computer.
+     On a narrow screen they stack instead of squeezing into each other. */
+  .four{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;
+    align-items:start;margin-bottom:16px}
+  .four>.card{margin-bottom:0}
+  @media (max-width:1180px){ .four{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  @media (max-width:700px){ .four{grid-template-columns:1fr} }
+
+  /* the date / amount lines inside the payment and advance cards */
+  .ln{display:grid;grid-template-columns:auto 1fr auto;gap:4px 8px;align-items:center;
+    padding:7px 15px;border-bottom:1px solid #EEF1F5;font-size:13px}
+  .ln:last-child{border-bottom:0}
+  .ln .amt{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .ln .x{border:1px solid #F0C9C9;background:#FFF5F5;color:var(--bad);border-radius:6px;
+    padding:2px 7px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:800;line-height:1.3}
+  .tot{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:9px 15px;
+    border-top:2px solid var(--ink);font-size:13px}
+  .tot b:last-child{text-align:right;font-variant-numeric:tabular-nums;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  /* the little add-form at the foot of a narrow card: one control per line */
+  .add{display:flex;flex-direction:column;gap:7px;padding:11px 15px 14px;border-top:1px solid var(--line)}
+  .add input,.add select{width:100%}
+  .add .pair{display:flex;gap:7px}
+  .add .pair input{flex:1;min-width:0}
+
+  /* the month register scrolls inside its own box, heading stays put */
+  .reg{max-height:460px;overflow:auto}
+  .reg th{position:sticky;top:0;z-index:2}
+
+  /* the day's photos in the edit box, each with its own delete */
+  .pg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:6px}
+  .pg .cap{font-size:9px;letter-spacing:.05em;color:var(--mut);margin-bottom:4px;font-weight:800}
+  .pg img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:7px;
+    border:1px solid var(--line);background:#E8EBEF;cursor:pointer;display:block}
+  .pg .none{width:100%;aspect-ratio:3/4;border-radius:7px;background:#EEF1F5;
+    border:1px dashed #C3CBD4;display:flex;align-items:center;justify-content:center;
+    font-size:9px;color:#8893A1;text-align:center;font-weight:800}
+  .pg .del{width:100%;margin-top:4px;padding:4px 0;border:1px solid #F0C9C9;border-radius:6px;
+    background:#FFF5F5;color:var(--bad);font-family:inherit;font-size:10px;
+    letter-spacing:.04em;font-weight:800;cursor:pointer}
+
+  .danger{border-color:#E9C4C4}
+  .danger>h3{color:var(--bad);border-bottom-color:var(--bad)}
+  .wide-btn{width:100%;padding:13px;border-radius:8px;font-family:inherit;font-size:14px;
+    cursor:pointer;font-weight:800;letter-spacing:.04em}
+  .wide-btn.red{border:1.5px solid var(--bad);background:#fff;color:var(--bad);font-size:15px;padding:16px}
+  .note-box{border:1.5px dashed #C9D2DC;border-radius:8px;padding:12px 14px;font-size:12px;
+    color:#44494F;line-height:1.7;margin-top:12px;font-weight:700}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="lbox">
+    <h1>ADSTYLE ADMIN</h1>
+    <p>Enter the admin PIN</p>
+    <input id="pin" type="tel" maxlength="8" inputmode="numeric" placeholder="••••">
+    <button onclick="doLogin()">OPEN</button>
+    <div class="lerr" id="lerr"></div>
+  </div>
+</div>
+
+<header>
+  <div class="brand"><b id="hCompany">ADSTYLE</b><span>STAFF ATTENDANCE &amp; SALARY</span></div>
+  <nav>
+    <button class="on" data-t="today"  onclick="tab('today')">Today</button>
+    <button          data-t="month"  onclick="tab('month')">Month Sheet</button>
+    <button          data-t="salary" onclick="tab('salary')">Salary</button>
+    <button          data-t="emp"    onclick="tab('emp')">Staff</button>
+    <button          data-t="set"    onclick="tab('set')">Settings</button>
+  </nav>
+</header>
+
+<main>
+
+<div class="tab on" id="t-today">
+  <div class="row">
+    <div class="f"><label>DATE</label><input type="date" id="tDate" onchange="loadToday()"></div>
+    <div class="f"><button class="b g" onclick="todayNow()">Go to today</button></div>
+    <div class="f"><button class="b g" onclick="loadToday()">Refresh</button></div>
+    <div class="f" style="margin-left:auto"><button class="b" onclick="markHolidayAll()">Mark this date a HOLIDAY for everyone</button></div>
+  </div>
+  <div class="stats" id="tStats"></div>
+  <div class="card"><div class="tw"><table id="tTable"></table></div></div>
+</div>
+
+<div class="tab" id="t-month">
+  <div class="row">
+    <div class="f"><label>STAFF</label><select id="mEmp" onchange="loadMonth()"></select></div>
+    <div class="f"><label>MONTH</label><select id="mMonth" onchange="loadMonth()"></select></div>
+    <div class="f"><label>YEAR</label><select id="mYear" onchange="loadMonth()"></select></div>
+    <div class="f"><label>WEEKLY OFF</label><select id="mOff" onchange="changeOff()">
+      <option value="">No weekly off</option>
+      <option value="Sun">Sunday</option><option value="Mon">Monday</option>
+      <option value="Tue">Tuesday</option><option value="Wed">Wednesday</option>
+      <option value="Thu">Thursday</option><option value="Fri">Friday</option>
+      <option value="Sat">Saturday</option>
+    </select></div>
+    <div class="f"><button class="b g" onclick="loadMonth()">Refresh</button></div>
+    <div class="f"><button class="b" onclick="printSheet()">Print A4</button></div>
+  </div>
+  <div id="mBody"></div>
+</div>
+
+<div class="tab" id="t-salary">
+  <div class="row">
+    <div class="f"><label>MONTH</label><select id="sMonth" onchange="loadSalary()"></select></div>
+    <div class="f"><label>YEAR</label><select id="sYear" onchange="loadSalary()"></select></div>
+    <div class="f"><button class="b g" onclick="loadSalary()">Refresh</button></div>
+    <div class="f"><button class="b" onclick="exportCsv()">Download Excel (CSV)</button></div>
+  </div>
+  <div class="card"><div class="tw"><table id="sTable"></table></div></div>
+</div>
+
+<div class="tab" id="t-emp">
+  <div class="row"><button class="b" onclick="editEmp(null)">+ Add Staff</button></div>
+  <div class="card"><div class="tw"><table id="eTable"></table></div></div>
+</div>
+
+<div class="tab" id="t-set">
+  <div class="card" style="max-width:620px">
+    <h3>SETTINGS</h3>
+    <div style="padding:16px 17px" id="setBody"></div>
+    <div style="padding:0 17px 16px"><button class="b" onclick="saveSet()">Save Settings</button></div>
+  </div>
+  <div class="card" style="max-width:620px">
+    <h3>LINKS</h3>
+    <div style="padding:16px 17px">
+      <p class="muted" style="margin:0 0 6px">Factory phone — open this on the wall phone:</p>
+      <div class="mono" id="linkKiosk" style="word-break:break-all;font-size:12px;margin-bottom:14px"></div>
+      <p class="muted" style="margin:0 0 6px">Computer — this page:</p>
+      <div class="mono" id="linkAdmin" style="word-break:break-all;font-size:12px"></div>
+    </div>
+  </div>
+
+  <div class="card" style="max-width:620px">
+    <h3>SESSION</h3>
+    <div style="padding:14px 15px;display:flex;flex-direction:column;gap:10px">
+      <button class="wide-btn g b" style="background:#fff;color:var(--ink);border:1px solid var(--line)"
+        onclick="openSheet()">OPEN GOOGLE SHEET</button>
+      <button class="wide-btn b" onclick="logOut()">LOG OUT</button>
+      <div class="muted" style="font-size:11px;line-height:1.6">
+        Logging out brings the PIN screen back. Do this before you leave the computer,
+        or if you hand it to someone else.
+      </div>
+    </div>
+  </div>
+
+  <div class="card danger" style="max-width:620px">
+    <h3>DANGER — ADMIN ONLY</h3>
+    <div style="padding:16px 15px">
+      <button class="wide-btn red" onclick="startFresh()">START FRESH — EMPTY THE REGISTER</button>
+      <div class="note-box">
+        Clears every punch, every photo record, and all advances, payments and loan entries.<br>
+        <b>Your staff list, their salaries and your settings are all kept.</b><br>
+        Your PIN is asked for before anything happens.
+      </div>
+      <div style="font-size:11px;color:var(--warn);background:var(--warn-bg);border-radius:7px;
+        padding:10px 12px;margin-top:12px;line-height:1.6">
+        The photos already in Google Drive are not touched — delete that folder yourself
+        if you want the pictures gone too.
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<div class="ov" id="imgOv" onclick="this.classList.remove('on')"><img id="imgBig" src="" alt="Attendance photo"></div>
+<div class="ov" id="modal"><div class="ovc" id="modalBody"></div></div>
+
+<script>
+var BOOT=null, CUR=null, DAYCACHE={};
+var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+document.getElementById('pin').addEventListener('keydown',function(e){ if(e.key==='Enter') doLogin(); });
+function doLogin(){
+  document.getElementById('lerr').textContent='checking…';
+  google.script.run.withSuccessHandler(function(ok){
+    if(ok){ document.getElementById('login').style.display='none'; boot(); }
+    else document.getElementById('lerr').textContent='Wrong PIN';
+  }).withFailureHandler(function(e){
+    document.getElementById('lerr').textContent=e.message;
+  }).adminLogin(document.getElementById('pin').value);
+}
+
+function bootError(msg){
+  document.getElementById('login').style.display='none';
+  document.querySelector('main').innerHTML=
+    '<div class="card"><h3 style="color:var(--bad)">THE DASHBOARD COULD NOT START</h3>'+
+    '<div style="padding:16px 17px"><p style="font-size:14px;line-height:1.6"><b>Error:</b><br>'+msg+'</p>'+
+    '<p class="muted">Most likely fix: open the spreadsheet, Extensions → Apps Script, '+
+    'choose <b>setupSystem</b> in the dropdown next to Run, click <b>Run</b>, then reload this page.</p></div></div>';
+}
+
+function boot(){
+  google.script.run.withSuccessHandler(function(b){
+    BOOT=b;
+    if(b.warning){
+      var w=document.createElement('div');
+      w.className='card';
+      w.innerHTML='<div style="padding:14px 17px;background:#FDF0D5;color:#8A5200;font-weight:700">'+b.warning+'</div>';
+      document.querySelector('main').prepend(w);
+    }
+    document.getElementById('hCompany').textContent=b.settings.companyName||'ADSTYLE';
+    document.getElementById('tDate').value=b.today;
+    fillMY('mMonth','mYear',b.year,b.month);
+    fillMY('sMonth','sYear',b.year,b.month);
+    fillEmps();
+    buildSettings();
+    document.getElementById('linkKiosk').textContent=b.webAppUrl||'(deploy the script first)';
+    document.getElementById('linkAdmin').textContent=b.webAppUrl?(b.webAppUrl+'?page=admin'):'(deploy the script first)';
+    loadToday();
+  }).withFailureHandler(function(e){ bootError(e.message); }).getBootstrap();
+}
+
+function err(e){ alert('Error: '+e.message); }
+
+function fillMY(mid,yid,y,m){
+  var ms=document.getElementById(mid), ys=document.getElementById(yid);
+  ms.innerHTML=''; ys.innerHTML='';
+  MONTHS.forEach(function(n,i){
+    var o=document.createElement('option'); o.value=i+1; o.textContent=n;
+    if(i+1===m) o.selected=true; ms.appendChild(o);
+  });
+  for(var yy=y-3; yy<=y+1; yy++){
+    var o=document.createElement('option'); o.value=yy; o.textContent=yy;
+    if(yy===y) o.selected=true; ys.appendChild(o);
+  }
+}
+function fillEmps(){
+  var s=document.getElementById('mEmp'); s.innerHTML='';
+  BOOT.employees.filter(function(e){return e.active;}).forEach(function(e){
+    var o=document.createElement('option'); o.value=e.empId; o.textContent=e.name; s.appendChild(o);
+  });
+}
+function tab(n){
+  ['today','month','salary','emp','set'].forEach(function(t){
+    document.getElementById('t-'+t).classList.toggle('on',t===n);
+  });
+  document.querySelectorAll('nav button').forEach(function(b){ b.classList.toggle('on',b.dataset.t===n); });
+  if(n==='month') loadMonth();
+  if(n==='salary') loadSalary();
+  if(n==='emp') loadEmps();
+}
+
+function fmt(n){
+  var neg=n<0; n=Math.abs(Number(n)||0);
+  return (neg?'− ':'')+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+/* a note the user typed must never break the page it is put into */
+function esc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function otCell(v){
+  if(v===''||v===null||v===undefined) return '—';
+  var n=Number(v);
+  if(n>0) return '<span style="color:var(--ok);font-weight:800">+'+n.toFixed(2)+'</span>';
+  if(n<0) return '<span style="color:var(--bad);font-weight:800">'+n.toFixed(2)+'</span>';
+  return '0.00';
+}
+function statusChip(s){
+  if(!s) return '<span class="chip c-off">—</span>';
+  var c='c-off';
+  if(s==='PRESENT') c='c-ok';
+  else if(s==='SHORT TIME') c='c-warn';
+  else if(s==='ABSENT'||s==='NO PUNCH OUT'||s==='NO PUNCH IN'||s==='CHECK TIMES') c='c-bad';
+  else if(s==='IN OFFICE') c='c-blue';
+  else if(s.indexOf('HOLIDAY')===0) c='c-warn';
+  return '<span class="chip '+c+'">'+s+'</span>';
+}
+function photoCells(p){
+  var o='';
+  ['IN','LUNCH_OUT','LUNCH_IN','OUT'].forEach(function(t){
+    if(p[t]) o+='<img class="thumb" src="'+p[t]+'" alt="'+t+'" title="'+t+'" onclick="bigImg(\''+p[t]+'\')">';
+  });
+  return o||'<span class="muted">—</span>';
+}
+function bigImg(u){
+  document.getElementById('imgBig').src=u.replace('sz=w400','sz=w1200');
+  document.getElementById('imgOv').classList.add('on');
+}
+function stat(n,l,c){ return '<div class="stat"><div class="n" style="color:'+c+'">'+n+'</div><div class="l">'+l+'</div></div>'; }
+
+/* ---------------- TODAY ---------------- */
+function todayNow(){ document.getElementById('tDate').value=BOOT.today; loadToday(); }
+function loadToday(){
+  document.getElementById('tTable').innerHTML='<tr><td class="busy">Loading…</td></tr>';
+  google.script.run.withSuccessHandler(renderToday).withFailureHandler(err)
+    .getTodayBoard(document.getElementById('tDate').value);
+}
+function renderToday(b){
+  var s=b.summary;
+  document.getElementById('tStats').innerHTML=
+    stat(s.present,'PRESENT','var(--ok)')+
+    stat(s.inOffice,'STILL IN','var(--blue)')+
+    stat(s.short,'SHORT TIME','var(--warn)')+
+    stat(s.absent,'ABSENT','var(--bad)')+
+    stat(s.problem||0,'NEEDS FIXING','var(--bad)')+
+    stat(s.total,'TOTAL STAFF','var(--ink)');
+
+  var h='<tr><th>NAME</th><th>IN</th><th>LUNCH OUT</th><th>LUNCH IN</th><th>OUT</th>'+
+        '<th class="num">HOURS</th><th class="num">OT / SHORT</th><th>STATUS</th><th>PHOTOS</th><th></th></tr>';
+  b.rows.forEach(function(r){
+    DAYCACHE[r.empId+'|'+b.dateKey]=r;
+    h+='<tr><td><b>'+r.name+'</b>'+(r.flag?'<div class="muted" style="color:var(--bad)">'+r.flag+'</div>':'')+'</td>'+
+      '<td class="mono">'+(r.in12||'—')+'</td><td class="mono">'+(r.lunchOut12||'—')+'</td>'+
+      '<td class="mono">'+(r.lunchIn12||'—')+'</td><td class="mono">'+(r.out12||'—')+'</td>'+
+      '<td class="num mono">'+(r.workingHour===''?'—':Number(r.workingHour).toFixed(2))+'</td>'+
+      '<td class="num mono">'+otCell(r.overtime)+'</td>'+
+      '<td>'+statusChip(r.status)+'</td>'+
+      '<td><div class="thumbs">'+photoCells(r.photos)+'</div></td>'+
+      '<td><button class="b g s" onclick="editDay(\''+r.empId+'\',\''+String(r.name).replace(/'/g,'')+'\',\''+b.dateKey+'\')">Edit</button></td></tr>';
+  });
+  document.getElementById('tTable').innerHTML=h;
+}
+function markHolidayAll(){
+  var d=document.getElementById('tDate').value;
+  var note=prompt('Holiday name for '+d+'  (leave blank to REMOVE the holiday):','Holiday');
+  if(note===null) return;
+  google.script.run.withSuccessHandler(loadToday).withFailureHandler(err)
+    .saveDayStatus(d,'',note?'H':'',note);
+}
+
+/* ---------------- DAY EDIT ---------------- */
+var EDIT=null;        /* which day the edit box is showing */
+var PHOTO_DIRTY=false; /* a photo was deleted, so the page behind is stale */
+
+function editDay(empId,name,dateKey){
+  var r=DAYCACHE[empId+'|'+dateKey];
+  if(!r){ alert('Please refresh and try again.'); return; }
+  EDIT={empId:empId,name:name,dateKey:dateKey};
+  document.getElementById('modalBody').innerHTML=
+    '<h3 style="margin:0 0 4px;font-size:17px">'+name+'</h3>'+
+    '<p class="muted" style="margin:0 0 16px">'+r.dateLabel+'  '+r.weekday+'</p>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px">'+
+      fld('IN','edIN',r.inTime)+fld('LUNCH OUT','edLO',r.lunchOut)+
+      fld('LUNCH IN','edLI',r.lunchIn)+fld('OUT','edOUT',r.outTime)+'</div>'+
+    '<div style="margin:16px 0 14px">'+
+      '<label>PHOTOS — tap a photo to enlarge</label>'+
+      '<div class="pg" id="edPhotos">'+photoGrid(r.photos)+'</div>'+
+      '<p class="muted" style="margin:8px 0 0;font-size:11px;line-height:1.5">'+
+        'Deleting a photo does not change the punch time. The time stays, only the picture goes.</p>'+
+    '</div>'+
+    '<div class="f" style="margin-bottom:12px"><label>DAY STATUS</label><select id="edST">'+
+      '<option value="">Normal — work it out from the punches</option>'+
+      '<option value="H"'+(r.isHoliday?' selected':'')+'>Holiday</option>'+
+      '<option value="A"'+(r.status==='ABSENT'?' selected':'')+'>Force Absent</option></select></div>'+
+    '<div class="f" style="margin-bottom:14px"><label>NOTE</label><input id="edNT" placeholder="Reason for the correction"></div>'+
+    '<p class="muted">Times are entered as AM / PM. Clearing a box deletes that punch. Every edit is written to the AuditLog sheet.</p>'+
+    '<div class="row" style="margin:14px 0 0">'+
+      '<button class="b" onclick="saveDay(\''+empId+'\',\''+dateKey+'\')">Save</button>'+
+      '<button class="b g" onclick="closeModal()">Cancel</button></div>';
+  document.getElementById('modal').classList.add('on');
+}
+function fld(l,id,v){
+  return '<div class="f"><label>'+l+'</label><input type="time" id="'+id+'" value="'+(v||'')+'"></div>';
+}
+
+/* the four punch photos, each with its own delete */
+function photoGrid(photos){
+  photos=photos||{};
+  var names={IN:'IN',LUNCH_OUT:'LUNCH OUT',LUNCH_IN:'LUNCH IN',OUT:'OUT'};
+  var o='';
+  ['IN','LUNCH_OUT','LUNCH_IN','OUT'].forEach(function(t){
+    o+='<div><div class="cap">'+names[t]+'</div>';
+    if(photos[t]){
+      o+='<img src="'+esc(photos[t])+'" alt="'+names[t]+'" onclick="bigImg(\''+photos[t]+'\')">'+
+         '<button class="del" onclick="delPhoto(\''+t+'\')">DELETE</button>';
+    }else{
+      o+='<div class="none">NO<br>PHOTO</div>';
+    }
+    o+='</div>';
+  });
+  return o;
+}
+
+function delPhoto(type){
+  if(!EDIT) return;
+  if(!confirm('Delete this photo?\n\nThe punch time stays exactly as it is — only the picture goes.')) return;
+  var box=document.getElementById('edPhotos');
+  box.style.opacity='.5';
+  google.script.run
+    .withSuccessHandler(function(res){
+      box.style.opacity='1';
+      if(!res||!res.ok){ alert((res&&res.message)||'Could not delete that photo.'); return; }
+      var r=DAYCACHE[EDIT.empId+'|'+EDIT.dateKey];
+      if(r&&r.photos) delete r.photos[type];
+      box.innerHTML=photoGrid(r?r.photos:{});
+      PHOTO_DIRTY=true;
+    })
+    .withFailureHandler(function(e){ box.style.opacity='1'; err(e); })
+    .deletePhoto(EDIT.dateKey,EDIT.empId,type);
+}
+function saveDay(empId,dateKey){
+  var times={
+    IN:document.getElementById('edIN').value,
+    LUNCH_OUT:document.getElementById('edLO').value,
+    LUNCH_IN:document.getElementById('edLI').value,
+    OUT:document.getElementById('edOUT').value
+  };
+  var onMonth=document.getElementById('t-month').classList.contains('on');
+  PHOTO_DIRTY=false;        /* the save below reloads the page anyway */
+  closeModal();
+  google.script.run.withSuccessHandler(function(){ onMonth?loadMonth():loadToday(); })
+    .withFailureHandler(err)
+    .adminSaveDay(dateKey,empId,times,document.getElementById('edST').value,document.getElementById('edNT').value);
+}
+function closeModal(){
+  document.getElementById('modal').classList.remove('on');
+  EDIT=null;
+  /* a deleted photo has to disappear from the page behind too */
+  if(PHOTO_DIRTY){
+    PHOTO_DIRTY=false;
+    document.getElementById('t-month').classList.contains('on') ? loadMonth() : loadToday();
+  }
+}
+document.getElementById('modal').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
+
+/* ---------------- MONTH ---------------- */
+function loadMonth(){
+  var e=document.getElementById('mEmp').value;
+  if(!e){ document.getElementById('mBody').innerHTML='<div class="card"><div class="busy">No active staff.</div></div>'; return; }
+  document.getElementById('mBody').innerHTML='<div class="card"><div class="busy">Loading…</div></div>';
+  google.script.run.withSuccessHandler(renderMonth).withFailureHandler(err)
+    .getSalary(e,document.getElementById('mYear').value,document.getElementById('mMonth').value);
+}
+function changeOff(){
+  google.script.run.withSuccessHandler(loadMonth).withFailureHandler(err)
+    .saveWeeklyOff(document.getElementById('mEmp').value,
+      document.getElementById('mYear').value, document.getElementById('mMonth').value,
+      document.getElementById('mOff').value);
+}
+
+function renderMonth(s){
+  CUR=s;
+  document.getElementById('mOff').value=s.weeklyOff||'';
+  var p=s.pay, st=s.stats, L=s.loan;
+
+  var h='<div class="stats">'+
+    stat(st.workedDays,'DAYS WORKED','var(--ok)')+
+    stat(st.absentDays,'ABSENT','var(--bad)')+
+    stat(st.shortDays,'SHORT DAYS','var(--warn)')+
+    stat(st.netOT.toFixed(2),'NET OT HRS','var(--blue)')+
+    stat(st.incompleteDays,'MISSING PUNCH','var(--bad)')+
+  '</div>';
+
+  /* ---- the four money boxes, side by side ---- */
+  h+='<div class="four">';
+
+  /* 1. loan account */
+  h+='<div class="card"><h3>LOAN ACCOUNT</h3><div class="pay">'+
+    kv('Last month',L.opening)+
+    kv('New loan',L.newLoan)+
+    kv('Recovered',-L.recovered)+
+    '<div class="hr"></div>'+
+    kv('NEXT MONTH',L.closing,true)+
+    '</div><div class="add">'+
+      '<div class="pair">'+
+        '<input type="number" id="loanRec" value="'+L.recovered+'" aria-label="Recover this month">'+
+        '<button class="b" onclick="saveRec()">Save</button></div>'+
+      '<div class="muted" style="font-size:11px;line-height:1.45">'+
+        'A loan is not cut from the salary — only the recovery is.</div>'+
+    '</div></div>';
+
+  /* 2. salary */
+  h+='<div class="card"><h3>SALARY<em>'+p.shift+' hrs · '+fmt(p.perHour)+'/hr</em></h3><div class="pay">'+
+    kv('Basic',p.basic)+
+    kv('OT '+p.otHours.toFixed(2)+' hrs',p.otPay)+
+    kv('Tea',p.tea)+
+    kv('Absent '+st.absentDays+' day(s)',-p.absentDeduction)+
+    '<div class="hr"></div>'+
+    kv('TOTAL',p.totalSalary)+
+    kv('Advance',-p.monthAdvance)+
+    kv('Loan recovery',-p.loanRecovery)+
+    kv('Paid ('+s.payments.length+')',-p.paid)+
+    '<div class="hr"></div>'+
+    kv('BALANCE',p.balance,true)+
+  '</div></div>';
+
+  /* 3. payments */
+  h+='<div class="card"><h3>PAYMENTS<em>'+s.payments.length+'</em></h3><div class="scroll">';
+  if(!s.payments.length) h+='<div class="muted" style="padding:14px 15px">No payments yet.</div>';
+  s.payments.forEach(function(x){
+    h+='<div class="ln" title="'+esc(x.note||'')+'"><span class="mono">'+x.label+'</span>'+
+       '<span class="amt">'+fmt(x.amount)+'</span>'+
+       '<button class="x" onclick="delPay(\''+x.payId+'\')" title="Delete this payment">&times;</button></div>';
+  });
+  h+='</div><div class="tot"><b>TOTAL PAID</b><b>'+fmt(p.paid)+'</b></div>'+
+     '<div class="add">'+
+       '<input type="date" id="payDate" value="'+BOOT.today+'" aria-label="Payment date">'+
+       '<input id="payNote" placeholder="Note (optional)" aria-label="Payment note">'+
+       '<div class="pair"><input type="number" id="payAmt" placeholder="Amount" aria-label="Payment amount">'+
+       '<button class="b" onclick="addPay()">Add</button></div>'+
+     '</div></div>';
+
+  /* 4. advances */
+  h+='<div class="card"><h3>ADVANCES<em>'+s.advances.length+'</em></h3><div class="scroll">';
+  if(!s.advances.length) h+='<div class="muted" style="padding:14px 15px">No advances this month.</div>';
+  s.advances.forEach(function(a){
+    h+='<div class="ln" title="'+esc(a.note||'')+'"><span class="mono">'+a.label+'</span>'+
+       '<span class="amt">'+fmt(a.amount)+'</span>'+
+       '<button class="x" onclick="delAdv(\''+a.advId+'\')" title="Delete this advance">&times;</button>'+
+       '<span class="chip '+(a.kind==='LOAN'?'c-warn':'c-off')+'" style="grid-column:1/-1;justify-self:start;font-size:10px">'+
+         (a.kind==='LOAN'?'LOAN — recover later':'CUT FROM THIS MONTH')+'</span></div>';
+  });
+  h+='</div><div class="add">'+
+       '<input type="date" id="advDate" value="'+BOOT.today+'" aria-label="Advance date">'+
+       '<select id="advKind" aria-label="Advance kind">'+
+         '<option value="MONTH">Cut from this month</option>'+
+         '<option value="LOAN">Loan — recover later</option></select>'+
+       '<input id="advNote" placeholder="Note (optional)" aria-label="Advance note">'+
+       '<div class="pair"><input type="number" id="advAmt" placeholder="Amount" aria-label="Advance amount">'+
+       '<button class="b" onclick="addAdv()">Add</button></div>'+
+     '</div></div>';
+
+  h+='</div>';   /* end of the four boxes */
+
+  /* day grid — every day of the month, scrolling inside its own box */
+  h+='<div class="card"><h3>MONTH REGISTER<em>all '+s.days.length+' days · weekly off: '+(s.weeklyOff||'none')+'</em></h3><div class="reg"><table>'+
+     '<tr><th>DATE</th><th>DAY</th><th>IN</th><th>L.OUT</th><th>L.IN</th><th>OUT</th>'+
+     '<th class="num">HOURS</th><th class="num">OT / SHORT</th><th>STATUS</th><th>PHOTOS</th><th></th></tr>';
+  s.days.forEach(function(d){
+    DAYCACHE[s.employee.empId+'|'+d.dateKey]=d;
+    var bg = d.status==='ABSENT' ? 'background:#FEF6F6' :
+             (d.status==='SHORT TIME' ? 'background:#FFFCF3' :
+             (d.isHoliday ? 'background:#FFFBF0' : ''));
+    h+='<tr style="'+bg+'">'+
+      '<td class="mono">'+d.dateLabel+'</td><td class="muted">'+d.weekday+'</td>'+
+      '<td class="mono">'+(d.in12||'')+'</td><td class="mono">'+(d.lunchOut12||'')+'</td>'+
+      '<td class="mono">'+(d.lunchIn12||'')+'</td><td class="mono">'+(d.out12||'')+'</td>'+
+      '<td class="num mono">'+(d.workingHour===''?'':Number(d.workingHour).toFixed(2))+'</td>'+
+      '<td class="num mono">'+otCell(d.overtime)+'</td>'+
+      '<td>'+statusChip(d.status)+(d.flag?'<div class="muted" style="color:var(--warn)">'+d.flag+'</div>':'')+'</td>'+
+      '<td><div class="thumbs">'+photoCells(d.photos)+'</div></td>'+
+      '<td><button class="b g s" onclick="editDay(\''+s.employee.empId+'\',\''+String(s.employee.name).replace(/'/g,'')+'\',\''+d.dateKey+'\')">Edit</button></td></tr>';
+  });
+  h+='</table></div><div style="padding:12px 17px;background:#F3F5F8;display:flex;gap:22px;flex-wrap:wrap;font-size:13px">'+
+     '<span>Hours worked <b class="mono">'+st.totalWorked.toFixed(2)+'</b></span>'+
+     '<span>Plus hours <b class="mono" style="color:var(--ok)">+'+st.plusHours.toFixed(2)+'</b></span>'+
+     '<span>Short hours <b class="mono" style="color:var(--bad)">'+st.shortHours.toFixed(2)+'</b></span>'+
+     '<span>NET overtime <b class="mono">'+(st.netOT>=0?'+':'')+st.netOT.toFixed(2)+'</b></span>'+
+     '<span>Weekly offs <b>'+st.weekOffs+'</b></span></div></div>';
+
+  document.getElementById('mBody').innerHTML=h;
+}
+
+function kv(k,v,big){
+  return '<div class="k"'+(big?' style="color:var(--ink);font-weight:800"':'')+'>'+k+'</div>'+
+    '<div class="v'+(big?' big':'')+'"'+(v<0?' style="color:var(--bad)"':'')+'>'+fmt(v)+'</div>';
+}
+function saveRec(){
+  google.script.run.withSuccessHandler(loadMonth).withFailureHandler(err)
+    .saveLoanRecovery(CUR.employee.empId,CUR.year,CUR.month,document.getElementById('loanRec').value,'');
+}
+function addPay(){
+  var a=document.getElementById('payAmt').value;
+  if(!a){ alert('Enter an amount.'); return; }
+  google.script.run.withSuccessHandler(loadMonth).withFailureHandler(err)
+    .savePayment(CUR.employee.empId,document.getElementById('payDate').value,a,document.getElementById('payNote').value);
+}
+function delPay(id){ if(confirm('Delete this payment?')) google.script.run.withSuccessHandler(loadMonth).withFailureHandler(err).deletePayment(id); }
+function addAdv(){
+  var a=document.getElementById('advAmt').value;
+  if(!a){ alert('Enter an amount.'); return; }
+  google.script.run.withSuccessHandler(loadMonth).withFailureHandler(err)
+    .saveAdvance(CUR.employee.empId,document.getElementById('advDate').value,a,
+      document.getElementById('advKind').value,document.getElementById('advNote').value);
+}
+function delAdv(id){ if(confirm('Delete this advance?')) google.script.run.withSuccessHandler(loadMonth).withFailureHandler(err).deleteAdvance(id); }
+
+/* ---------------- SALARY ---------------- */
+function loadSalary(){
+  document.getElementById('sTable').innerHTML='<tr><td class="busy">Calculating…</td></tr>';
+  google.script.run.withSuccessHandler(function(rows){
+    var h='<tr><th>NAME</th><th class="num">BASIC</th><th class="num">NET OT</th><th class="num">SHORT</th>'+
+          '<th class="num">OT PAY</th><th class="num">TEA</th><th class="num">ABS</th><th class="num">ABS DED</th>'+
+          '<th class="num">TOTAL</th><th class="num">ADVANCE</th><th class="num">LOAN REC</th>'+
+          '<th class="num">PAID</th><th class="num">BALANCE</th><th class="num">LOAN BAL</th></tr>';
+    var T={basic:0,otPay:0,tea:0,ded:0,total:0,adv:0,rec:0,paid:0,bal:0};
+    rows.forEach(function(r){
+      T.basic+=r.basic; T.otPay+=r.otPay; T.tea+=r.tea; T.ded+=r.absentDed;
+      T.total+=r.totalSalary; T.adv+=r.monthAdvance; T.rec+=r.loanRecovery; T.paid+=r.paid; T.bal+=r.balance;
+      h+='<tr><td><b>'+r.name+'</b></td><td class="num mono">'+fmt(r.basic)+'</td>'+
+        '<td class="num mono">'+otCell(r.otHours)+'</td><td class="num mono">'+r.shortHours.toFixed(2)+'</td>'+
+        '<td class="num mono">'+fmt(r.otPay)+'</td><td class="num mono">'+fmt(r.tea)+'</td>'+
+        '<td class="num mono">'+r.absentDays+'</td><td class="num mono">'+fmt(r.absentDed)+'</td>'+
+        '<td class="num mono"><b>'+fmt(r.totalSalary)+'</b></td><td class="num mono">'+fmt(r.monthAdvance)+'</td>'+
+        '<td class="num mono">'+fmt(r.loanRecovery)+'</td><td class="num mono">'+fmt(r.paid)+'</td>'+
+        '<td class="num mono"><b>'+fmt(r.balance)+'</b></td><td class="num mono">'+fmt(r.loanClosing)+'</td></tr>';
+    });
+    h+='<tr style="background:#F3F5F8;font-weight:800"><td>TOTAL</td><td class="num mono">'+fmt(T.basic)+'</td>'+
+      '<td></td><td></td><td class="num mono">'+fmt(T.otPay)+'</td><td class="num mono">'+fmt(T.tea)+'</td>'+
+      '<td></td><td class="num mono">'+fmt(T.ded)+'</td><td class="num mono">'+fmt(T.total)+'</td>'+
+      '<td class="num mono">'+fmt(T.adv)+'</td><td class="num mono">'+fmt(T.rec)+'</td>'+
+      '<td class="num mono">'+fmt(T.paid)+'</td><td class="num mono">'+fmt(T.bal)+'</td><td></td></tr>';
+    document.getElementById('sTable').innerHTML=h;
+  }).withFailureHandler(err).getAllSalaries(document.getElementById('sYear').value,document.getElementById('sMonth').value);
+}
+function exportCsv(){
+  var y=document.getElementById('sYear').value, m=document.getElementById('sMonth').value;
+  google.script.run.withSuccessHandler(function(csv){
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download='ADSTYLE-Salary-'+y+'-'+('0'+m).slice(-2)+'.csv';
+    a.click();
+  }).withFailureHandler(err).buildMonthCsv(y,m);
+}
+
+/* ---------------- STAFF ---------------- */
+function loadEmps(){
+  google.script.run.withSuccessHandler(function(list){
+    BOOT.employees=list; fillEmps();
+    var h='<tr><th>NAME</th><th class="num">SALARY</th><th class="num">TEA</th><th class="num">SHIFT HRS</th>'+
+          '<th>JOINED</th><th>STATUS</th><th></th></tr>';
+    list.forEach(function(e){
+      h+='<tr><td><b>'+e.name+'</b></td><td class="num mono">'+fmt(e.monthlySalary)+'</td>'+
+        '<td class="num mono">'+fmt(e.teaAllowance)+'</td><td class="num mono">'+e.shiftHours+'</td>'+
+        '<td class="mono">'+(e.joinDate||'—')+'</td>'+
+        '<td>'+(e.active?'<span class="chip c-ok">ACTIVE</span>':'<span class="chip c-off">INACTIVE</span>')+'</td>'+
+        '<td style="text-align:right"><button class="b g s" onclick=\'editEmp('+JSON.stringify(e).replace(/'/g,'&#39;')+')\'>Edit</button></td></tr>';
+    });
+    document.getElementById('eTable').innerHTML=h;
+  }).withFailureHandler(err).getEmployees(false);
+}
+function editEmp(e){
+  e=e||{empId:'',name:'',active:true,monthlySalary:0,teaAllowance:0,shiftHours:8,joinDate:''};
+  document.getElementById('modalBody').innerHTML=
+    '<h3 style="margin:0 0 16px;font-size:17px">'+(e.empId?'Edit Staff':'Add Staff')+'</h3>'+
+    inp('Name','eN',e.name,'text')+
+    inp('Monthly salary','eS',e.monthlySalary,'number')+
+    inp('Tea allowance','eT',e.teaAllowance,'number')+
+    inp('Shift length in hours','eH',e.shiftHours,'number')+
+    inp('Joining date','eJ',e.joinDate,'date')+
+    '<div class="f" style="margin-bottom:14px"><label>STATUS</label><select id="eA">'+
+      '<option value="1"'+(e.active?' selected':'')+'>Active</option>'+
+      '<option value="0"'+(!e.active?' selected':'')+'>Inactive — hidden from the phone</option></select></div>'+
+    '<div class="row" style="margin:0"><button class="b" onclick="saveEmp(\''+e.empId+'\')">Save</button>'+
+    '<button class="b g" onclick="closeModal()">Cancel</button></div>';
+  document.getElementById('modal').classList.add('on');
+}
+function inp(l,id,v,t){
+  return '<div class="f" style="margin-bottom:10px"><label>'+l.toUpperCase()+'</label>'+
+         '<input type="'+t+'" id="'+id+'" value="'+(v===null||v===undefined?'':v)+'"></div>';
+}
+function saveEmp(empId){
+  var n=document.getElementById('eN').value.trim();
+  if(!n){ alert('Name is required.'); return; }
+  google.script.run.withSuccessHandler(function(){ closeModal(); loadEmps(); }).withFailureHandler(err)
+    .saveEmployee({empId:empId,name:n,active:document.getElementById('eA').value==='1',
+      monthlySalary:document.getElementById('eS').value,
+      teaAllowance:document.getElementById('eT').value,
+      shiftHours:document.getElementById('eH').value,
+      joinDate:document.getElementById('eJ').value, notes:''});
+}
+
+/* ---------------- SETTINGS ---------------- */
+var SETFIELDS=[
+  ['companyName','Company name','text'],
+  /* the camera choice is gone: photos are always taken with the phone's own
+     camera app, because Google's frame blocks the in-page camera on some phones */
+  ['shiftHours','Default shift length in hours','number'],
+  ['lunchFallback','Lunch assumed when not punched (hours)','number'],
+  ['weeklyOff','Default weekly off (Sun, Mon…)','text'],
+  ['adminPin','Admin PIN','text'],
+  ['dailyEmail','Daily summary email (blank = off)','text']
+];
+function buildSettings(){
+  var h='';
+  SETFIELDS.forEach(function(f){
+    var v=BOOT.settings[f[0]]; if(v===undefined||v===null) v='';
+    h+='<div class="f" style="margin-bottom:12px"><label>'+f[1].toUpperCase()+'</label>';
+    if(f[2]==='select'){
+      h+='<select id="st_'+f[0]+'">';
+      f[3].forEach(function(o){ h+='<option value="'+o[0]+'"'+(String(v)===o[0]?' selected':'')+'>'+o[1]+'</option>'; });
+      h+='</select>';
+    } else h+='<input type="'+f[2]+'" id="st_'+f[0]+'" value="'+v+'">';
+    h+='</div>';
+  });
+  document.getElementById('setBody').innerHTML=h;
+}
+function saveSet(){
+  var o={};
+  SETFIELDS.forEach(function(f){ o[f[0]]=document.getElementById('st_'+f[0]).value; });
+  google.script.run.withSuccessHandler(function(s){
+    BOOT.settings=s;
+    document.getElementById('hCompany').textContent=s.companyName;
+    alert('Settings saved.');
+  }).withFailureHandler(err).saveSettings(o);
+}
+
+/* ---------------- SESSION & START FRESH ---------------- */
+function openSheet(){
+  var u=BOOT&&BOOT.sheetUrl;
+  if(!u){ alert('The spreadsheet link is not available. Open the sheet from Google Drive.'); return; }
+  window.open(u,'_blank');
+}
+
+function logOut(){
+  CUR=null; DAYCACHE={}; EDIT=null; PHOTO_DIRTY=false;
+  closeModal();
+  document.getElementById('imgOv').classList.remove('on');
+  document.getElementById('pin').value='';
+  document.getElementById('lerr').textContent='';
+  document.getElementById('login').style.display='flex';
+  document.getElementById('pin').focus();
+}
+
+function startFresh(){
+  var pin=prompt('START FRESH\n\nThis empties the whole register — every punch, every advance, '+
+    'every payment and every loan entry.\n\nYour staff list and settings are kept.\n\n'+
+    'Type the admin PIN to go ahead:');
+  if(pin===null||pin==='') return;
+  if(!confirm('Last check.\n\nEverything in the register will be gone and it cannot be undone.\n\n'+
+              'Empty the register now?')) return;
+
+  google.script.run
+    .withSuccessHandler(function(res){
+      if(!res||!res.ok){ alert((res&&res.message)||'Nothing was changed.'); return; }
+      alert(res.message);
+      CUR=null; DAYCACHE={};
+      boot();
+    })
+    .withFailureHandler(err)
+    .startFresh(pin);
+}
+
+/* ---------------- A4 PRINT ---------------- */
+function printSheet(){
+  if(!CUR){ alert('Open a month first.'); return; }
+  var s=CUR, p=s.pay, st=s.stats, L=s.loan;
+  var rows='';
+  s.days.forEach(function(d){
+    var bg = d.status==='ABSENT' ? 'background:#FBEDEC' :
+             (d.status==='WEEKLY OFF' ? 'background:#F1EFE9' :
+             (d.isHoliday ? 'background:#FAF2E2' : ''));
+    var mid = (d.status==='WEEKLY OFF'||d.status==='ABSENT'||d.status==='HOLIDAY')
+      ? '<td colspan="4" class="st">'+d.status+'</td>'
+      : '<td>'+(d.in12||'')+'</td><td>'+(d.lunchOut12||'')+'</td><td>'+(d.lunchIn12||'')+'</td><td>'+(d.out12||'')+'</td>';
+    rows+='<tr style="'+bg+'"><td>'+d.dateKey.slice(8)+'</td><td class="dy">'+d.weekday+'</td>'+mid+
+      '<td class="n">'+(d.workingHour===''?'—':Number(d.workingHour).toFixed(2))+'</td>'+
+      '<td class="n">'+(d.overtime===''?'—':(Number(d.overtime)>0?'+':'')+Number(d.overtime).toFixed(2))+'</td></tr>';
+  });
+
+  // payments print in two columns so 10+ entries still fit on one page
+  var payGrid='';
+  var half=Math.ceil(s.payments.length/2);
+  for(var i=0;i<half;i++){
+    var a=s.payments[i], b=s.payments[i+half];
+    payGrid+='<span class="k">'+(a?a.label.slice(0,5):'')+'</span><span class="n">'+(a?fmt(a.amount):'')+'</span>'+
+             '<span class="k">'+(b?b.label.slice(0,5):'')+'</span><span class="n">'+(b?fmt(b.amount):'')+'</span>';
+  }
+
+  var advRows='';
+  s.advances.forEach(function(a){
+    advRows+='<span class="k">'+a.label+' &nbsp;'+(a.kind==='LOAN'?'loan':'this month')+'</span><span class="n">'+fmt(a.amount)+'</span>';
+  });
+  if(!advRows) advRows='<span class="k">None</span><span class="n">—</span>';
+
+  var w=window.open('','_blank');
+  if(!w){ alert('Allow pop-ups for this site, then press Print A4 again.'); return; }
+  w.document.write(
+'<!doctype html><html><head><meta charset="utf-8"><title>ADSTYLE '+s.employee.name+' '+s.monthLabel+'</title><style>'+
+/* one A4 page, 8mm margins, nothing lighter than bold */
+'@page{size:A4;margin:8mm}'+
+'*{box-sizing:border-box}'+
+'body{margin:0;color:#111827;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-weight:700}'+
+'div,span,td,th,p,b{font-weight:700}'+
+'table{border-collapse:collapse;width:100%}'+
+/* a line between every column */
+'.reg th{background:#111827;color:#fff;font-size:8px;letter-spacing:.05em;padding:3px 4px;text-align:left;border:.75px solid #111827;font-weight:800}'+
+'.reg td{font-size:9.5px;padding:1.5px 4px;border:.75px solid #B8C0CA}'+
+'.n{text-align:right;font-variant-numeric:tabular-nums}'+
+'.dy{color:#5A6472}.st{font-size:8px;letter-spacing:.05em;color:#5A6472}'+
+'.box{border:1.25px solid #111827;border-radius:5px;overflow:hidden}'+
+'.box h3{margin:0;padding:3.5px 8px;background:#111827;color:#fff;font-size:8.5px;letter-spacing:.07em}'+
+/* narrow money column so the figure stays beside its label */
+'.kv{display:grid;grid-template-columns:1fr 78px;gap:2.5px 8px;padding:6px 8px;font-size:9px}'+
+'.kv .k{color:#44494F}'+
+'.kv .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:800}'+
+'.p4{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:2.5px 8px;padding:6px 8px;font-size:9px}'+
+'.hr{grid-column:1/-1;height:1.25px;background:#111827;margin:1.5px 0}'+
+'.sig{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding-top:16px}'+
+'.sig div{border-top:1.25px solid #111827;padding-top:4px;font-size:8.5px;letter-spacing:.06em;color:#44494F}'+
+'.page{display:flex;flex-direction:column;gap:7px;min-height:1047px}'+
+'</style></head><body><div class="page">'+
+
+/* header */
+'<div style="display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid #111827;padding-bottom:6px">'+
+  '<div><div style="font-size:23px;font-weight:800;letter-spacing:.1em;line-height:1">'+(BOOT.settings.companyName||'ADSTYLE')+'</div>'+
+  '<div style="font-size:8.5px;letter-spacing:.08em;color:#44494F;margin-top:3px">STAFF ATTENDANCE &amp; SALARY SHEET</div></div>'+
+  '<div style="text-align:right"><div style="font-size:15px;font-weight:800">'+s.monthLabel.toUpperCase()+'</div>'+
+  '<div style="font-size:8.5px;color:#44494F;margin-top:3px">Weekly off: '+((s.weeklyOff||'NONE').toUpperCase())+' &nbsp;·&nbsp; Shift: '+p.shift+' HOURS</div></div>'+
+'</div>'+
+
+/* staff */
+'<div style="display:flex;gap:7px">'+
+  '<div style="flex:1;border:1.25px solid #111827;border-radius:5px;padding:5px 9px">'+
+  '<span style="font-size:8.5px;letter-spacing:.07em;color:#44494F">NAME</span>'+
+  '<span style="font-size:15px;font-weight:800;margin-left:8px">'+s.employee.name+'</span></div>'+
+  '<div style="border:1.25px solid #111827;border-radius:5px;padding:5px 9px">'+
+  '<span style="font-size:8.5px;letter-spacing:.07em;color:#44494F">MONTHLY SALARY</span>'+
+  '<span style="font-size:15px;font-weight:800;margin-left:8px">'+fmt(p.basic)+'</span></div>'+
+'</div>'+
+
+/* the month */
+'<table class="reg"><thead><tr>'+
+'<th style="width:24px">DT</th><th style="width:28px">DAY</th>'+
+'<th>IN</th><th>LUNCH OUT</th><th>LUNCH IN</th><th>OUT</th>'+
+'<th class="n" style="width:46px">HOURS</th><th class="n" style="width:46px">OT</th>'+
+'</tr></thead><tbody>'+rows+'</tbody>'+
+'<tfoot><tr style="background:#111827;color:#fff">'+
+'<td colspan="6" style="font-size:8.5px;letter-spacing:.05em;padding:3.5px 4px;border:.75px solid #111827">'+
+'TOTAL &nbsp;·&nbsp; '+st.workedDays+' WORKED &nbsp;·&nbsp; '+st.weekOffs+' WEEKLY OFF &nbsp;·&nbsp; '+
+st.absentDays+' ABSENT &nbsp;·&nbsp; PLUS '+st.plusHours.toFixed(2)+' &nbsp;·&nbsp; SHORT '+st.shortHours.toFixed(2)+'</td>'+
+'<td class="n" style="font-size:10px;padding:3.5px 4px;border:.75px solid #111827">'+st.totalWorked.toFixed(2)+'</td>'+
+'<td class="n" style="font-size:10px;padding:3.5px 4px;border:.75px solid #111827">'+(st.netOT>=0?'+':'')+st.netOT.toFixed(2)+'</td>'+
+'</tr></tfoot></table>'+
+
+/* LOAN on the left, SALARY on the right */
+'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">'+
+
+  '<div style="display:flex;flex-direction:column;gap:7px">'+
+    '<div class="box"><h3>LOAN ACCOUNT</h3><div class="kv">'+
+      '<span class="k">Last month balance</span><span class="v">'+fmt(L.opening)+'</span>'+
+      '<span class="k">New loan this month</span><span class="v">'+fmt(L.newLoan)+'</span>'+
+      '<span class="k">Recovered this month</span><span class="v">'+fmt(-L.recovered)+'</span>'+
+      '<div class="hr"></div><span style="font-weight:800">BALANCE NEXT MONTH</span>'+
+      '<span class="v" style="font-size:11px">'+fmt(L.closing)+'</span></div></div>'+
+    '<div class="box"><h3>ADVANCES</h3><div class="kv">'+advRows+'</div></div>'+
+  '</div>'+
+
+  '<div style="display:flex;flex-direction:column;gap:7px">'+
+    '<div class="box"><h3>SALARY</h3><div class="kv">'+
+      '<span class="k">Basic salary</span><span class="v">'+fmt(p.basic)+'</span>'+
+      '<span class="k">Overtime, net '+p.otHours.toFixed(2)+' hrs</span><span class="v">'+fmt(p.otPay)+'</span>'+
+      '<span class="k">Tea allowance</span><span class="v">'+fmt(p.tea)+'</span>'+
+      '<span class="k">Absent '+st.absentDays+' day(s)</span><span class="v">'+fmt(-p.absentDeduction)+'</span>'+
+      '<div class="hr"></div><span style="font-weight:800">TOTAL SALARY</span>'+
+      '<span class="v" style="font-size:11px">'+fmt(p.totalSalary)+'</span>'+
+      '<span class="k">Advance, this month</span><span class="v">'+fmt(-p.monthAdvance)+'</span>'+
+      '<span class="k">Loan recovery</span><span class="v">'+fmt(-p.loanRecovery)+'</span>'+
+      '<span class="k">Paid ('+s.payments.length+')</span><span class="v">'+fmt(-p.paid)+'</span>'+
+      '<div class="hr"></div><span style="font-weight:800">BALANCE</span>'+
+      '<span class="v" style="font-size:12px">'+fmt(p.balance)+'</span></div></div>'+
+    '<div class="box"><h3>PAYMENTS &nbsp;·&nbsp; '+s.payments.length+'</h3><div class="p4">'+payGrid+
+      '<div class="hr"></div><span style="grid-column:1/3;font-weight:800;font-size:9.5px">TOTAL PAID</span>'+
+      '<span class="n" style="grid-column:3/-1;font-weight:800;font-size:11px">'+fmt(p.paid)+'</span></div></div>'+
+  '</div>'+
+
+'</div>'+
+
+'<div class="sig" style="margin-top:auto"><div>STAFF SIGNATURE</div><div>CHECKED BY</div><div>AUTHORISED SIGNATORY</div></div>'+
+'</div></body></html>');
+  w.document.close();
+  setTimeout(function(){ w.print(); }, 400);
+}
+</script>
+</body>
+</html>
